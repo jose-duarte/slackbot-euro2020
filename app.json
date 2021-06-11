@@ -1,6 +1,6 @@
 {
-    "name": "Worldcup slackbot",
-    "description": "A bot for slack to message about matches of the 2018 FIFA World Cup",
+    "name": "Euro2020 slackbot",
+    "description": "A bot for slack to message about matches of the 2020 European Championship",
     "repository": "https://github.com/nahog/slackbot-russia-2018-world-cup",
     "logo": "https://raw.githubusercontent.com/nahog/slackbot-russia-2018-world-cup/master/icon.png",
     "keywords": [

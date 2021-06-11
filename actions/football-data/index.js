@@ -10,7 +10,7 @@ const dbFile = "football-data.json";
 const dataApiOptions = {
     host: "api.football-data.org",
     port: 80,
-    path: "/v1/competitions/467/fixtures",
+    path: "/v2/competitions/EC/matches",
     method: "GET",
     headers: {
         "X-Auth-Token": process.env.FOOTBALL_DATA_API_TOKEN
@@ -40,7 +40,7 @@ module.exports = function(logger, t, postToSlack) {
             logger.debug("data from api call completed");
             logger.log("silly", "data from api call arrived, body: " + body);
 
-            const bodyData = JSON.parse(body);            
+            const bodyData = JSON.parse(body);
             let apiData = parseApiData(logger, bodyData);
 
             if (!fs.existsSync(dbFile)) {
@@ -66,9 +66,9 @@ module.exports = function(logger, t, postToSlack) {
 
 function createInitialDb(today, logger, apiData) {
     logger.info("creating db");
-    logger.debug("processing fixtures: " + apiData.fixtures.length);
+    logger.debug("processing matches: " + apiData.matches.length);
     let dbData = [];
-    _.forEach(apiData.fixtures, data => {
+    _.forEach(apiData.matches, data => {
         logger.debug("processing " + data.homeTeamName + data.awayTeamName + data.date);
         let dbDataItem = {};
         dbDataItem.id = getId(data);
@@ -166,7 +166,7 @@ function parseApiData(logger, bodyData) {
         logger.error(bodyData.error);
         return apiData;
     }
-    _.forEach(bodyData.fixtures, fixture => {
+    _.forEach(bodyData.matches, fixture => {
         apiData.push({
             id: getId(fixture),
             posted: false,
