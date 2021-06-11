@@ -47,9 +47,9 @@ module.exports = function(logger, t, postToSlack) {
                 createInitialDb(today, logger, bodyData);
             }
             let dbData = JSON.parse(fs.readFileSync(dbFile));
-            _.forEach(apiData, apiFixture => {
-                let dbFixture = _.findLast(dbData, ["id", apiFixture.id]);
-                processFixture(logger, t, postToSlack, today, apiFixture, dbFixture);
+            _.forEach(apiData, apimatch => {
+                let dbmatch = _.findLast(dbData, ["id", apimatch.id]);
+                processmatch(logger, t, postToSlack, today, apimatch, dbmatch);
             });
 
             const dbDataAsString = JSON.stringify(dbData, null, 4);
@@ -72,8 +72,8 @@ function createInitialDb(today, logger, apiData) {
         logger.debug("processing " + data.homeTeamName + data.awayTeamName + data.date);
         let dbDataItem = {};
         dbDataItem.id = getId(data);
-        const fixtureDate = moment(data.date);
-        dbDataItem.posted = fixtureDate.isBefore(today);
+        const matchDate = moment(data.date);
+        dbDataItem.posted = matchDate.isBefore(today);
         dbDataItem.status = data.status;
         dbDataItem.date = data.date,
         dbDataItem.homeTeamName = data.homeTeamName;
@@ -87,66 +87,66 @@ function createInitialDb(today, logger, apiData) {
     fs.writeFileSync(dbFile, dbDataAsString);
 }
 
-function processFixture(logger, t, postToSlack, today, apiFixture, dbFixture) {
-    logger.log("silly", "processing match: " + apiFixture.id);
+function processmatch(logger, t, postToSlack, today, apimatch, dbmatch) {
+    logger.log("silly", "processing match: " + apimatch.id);
 
-    const homeTeamDecoration = apiFixture.homeTeamName === process.env.HIGHLIGHTED_TEAM ? "*" : "";
-    const awayTeamDecoration = apiFixture.awayTeamName === process.env.HIGHLIGHTED_TEAM ? "*" : "";
+    const homeTeamDecoration = apimatch.homeTeamName === process.env.HIGHLIGHTED_TEAM ? "*" : "";
+    const awayTeamDecoration = apimatch.awayTeamName === process.env.HIGHLIGHTED_TEAM ? "*" : "";
 
-    const fixtureDate = moment(apiFixture.date);
+    const matchDate = moment(apimatch.date);
 
     if (
-        today.date() === fixtureDate.date() &&
-        today.month() === fixtureDate.month() &&
-        today.year() === fixtureDate.year()
+        today.date() === matchDate.date() &&
+        today.month() === matchDate.month() &&
+        today.year() === matchDate.year()
     ) {
-        if (!dbFixture.posted) {
-            const matchHour = getMatchHour(fixtureDate);
-            if (apiFixture.goalsHomeTeam === null ||
-                apiFixture.goalsAwayTeam === null) {
+        if (!dbmatch.posted) {
+            const matchHour = getMatchHour(matchDate);
+            if (apimatch.goalsHomeTeam === null ||
+                apimatch.goalsAwayTeam === null) {
                 postToSlack(t("Today's match {home} vs {away} at {date}", {
-                    home: homeTeamDecoration + t(apiFixture.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apiFixture.homeTeamName],
-                    away: flagsEmoji[apiFixture.awayTeamName] + " " + awayTeamDecoration + t(apiFixture.awayTeamName) + awayTeamDecoration,
+                    home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
+                    away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration,
                     date: matchHour
                 }));
             }
         } else {
-            if (apiFixture.status !== dbFixture.status) {
-                switch(apiFixture.status) {
+            if (apimatch.status !== dbmatch.status) {
+                switch(apimatch.status) {
                     case "IN_PLAY":
                         postToSlack(t(":goal_net: {home} vs {away} match started!", {
-                            home: homeTeamDecoration + t(apiFixture.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apiFixture.homeTeamName],
-                            away: flagsEmoji[apiFixture.awayTeamName] + " " + awayTeamDecoration + t(apiFixture.awayTeamName) + awayTeamDecoration
+                            home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
+                            away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration
                         }));
                         break;
                     case "FINISHED":
                         postToSlack(t(":sports_medal: Final results for {home} vs {away}, {home} {homeGoals} - {awayGoals} {away}", {
-                            home: homeTeamDecoration + t(apiFixture.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apiFixture.homeTeamName],
-                            away: flagsEmoji[apiFixture.awayTeamName] + " " + awayTeamDecoration + t(apiFixture.awayTeamName) + awayTeamDecoration,
-                            homeGoals: apiFixture.goalsHomeTeam,
-                            awayGoals: apiFixture.goalsAwayTeam
+                            home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
+                            away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration,
+                            homeGoals: apimatch.goalsHomeTeam,
+                            awayGoals: apimatch.goalsAwayTeam
                         }));
                         break;
                 }
             } else {
                 if (
-                    apiFixture.goalsHomeTeam !== dbFixture.goalsHomeTeam ||
-                    apiFixture.goalsAwayTeam !== dbFixture.goalsAwayTeam
+                    apimatch.goalsHomeTeam !== dbmatch.goalsHomeTeam ||
+                    apimatch.goalsAwayTeam !== dbmatch.goalsAwayTeam
                 ) {
                     postToSlack(t("New update for {home} vs {away}, {home} {homeGoals} - {awayGoals} {away}", {
-                        home: homeTeamDecoration + t(apiFixture.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apiFixture.homeTeamName],
-                        away: flagsEmoji[apiFixture.awayTeamName] + " " + awayTeamDecoration + t(apiFixture.awayTeamName) + awayTeamDecoration,
-                        homeGoals: apiFixture.goalsHomeTeam,
-                        awayGoals: apiFixture.goalsAwayTeam
+                        home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
+                        away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration,
+                        homeGoals: apimatch.goalsHomeTeam,
+                        awayGoals: apimatch.goalsAwayTeam
                     }));
                 }
             }
         }
 
-        dbFixture.status = apiFixture.status;
-        dbFixture.goalsHomeTeam = apiFixture.goalsHomeTeam;
-        dbFixture.goalsAwayTeam = apiFixture.goalsAwayTeam;
-        dbFixture.posted = true;
+        dbmatch.status = apimatch.status;
+        dbmatch.goalsHomeTeam = apimatch.goalsHomeTeam;
+        dbmatch.goalsAwayTeam = apimatch.goalsAwayTeam;
+        dbmatch.posted = true;
     }
 }
 
@@ -166,28 +166,28 @@ function parseApiData(logger, bodyData) {
         logger.error(bodyData.error);
         return apiData;
     }
-    _.forEach(bodyData.matches, fixture => {
+    _.forEach(bodyData.matches, match => {
         apiData.push({
-            id: getId(fixture),
+            id: getId(match),
             posted: false,
-            status: fixture.status,
-            date: fixture.date,
-            homeTeamName: fixture.homeTeamName,
-            awayTeamName: fixture.awayTeamName,
-            goalsHomeTeam: fixture.result.goalsHomeTeam,
-            goalsAwayTeam: fixture.result.goalsAwayTeam
+            status: match.status,
+            date: match.date,
+            homeTeamName: match.homeTeamName,
+            awayTeamName: match.awayTeamName,
+            goalsHomeTeam: match.result.goalsHomeTeam,
+            goalsAwayTeam: match.result.goalsAwayTeam
         });
     });
     return apiData;
 }
 
-function getId(fixture) {
+function getId(match) {
     // After this date there is only one match per day and we dont know the
     // teams yet, so the id is just the date
-    if (moment(fixture.date).isAfter("2018-06-30T00:00:00Z")) {
-        return fixture.date;
+    if (moment(match.date).isAfter("2018-06-30T00:00:00Z")) {
+        return match.date;
     }
-    return fixture.date + "_" + fixture.homeTeamName + "_" + fixture.awayTeamName;
+    return match.date + "_" + match.homeTeamName + "_" + match.awayTeamName;
 }
 
 function getToday() {
