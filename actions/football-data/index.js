@@ -78,8 +78,8 @@ function createInitialDb(today, logger, apiData) {
         dbDataItem.date = data.date,
         dbDataItem.homeTeamName = data.homeTeamName;
         dbDataItem.awayTeamName = data.awayTeamName;
-        dbDataItem.goalsHomeTeam = data.result.goalsHomeTeam;
-        dbDataItem.goalsAwayTeam = data.result.goalsAwayTeam;
+        dbDataItem.scoreHomeTeam = data.result.scoreHomeTeam;
+        dbDataItem.scoreAwayTeam = data.result.scoreAwayTeam;
         dbData.push(dbDataItem);
     });
     const dbDataAsString = JSON.stringify(dbData, null, 4);
@@ -102,8 +102,8 @@ function processmatch(logger, t, postToSlack, today, apimatch, dbmatch) {
     ) {
         if (!dbmatch.posted) {
             const matchHour = getMatchHour(matchDate);
-            if (apimatch.goalsHomeTeam === null ||
-                apimatch.goalsAwayTeam === null) {
+            if (apimatch.scoreHomeTeam === null ||
+                apimatch.scoreAwayTeam === null) {
                 postToSlack(t("Today's match {home} vs {away} at {date}", {
                     home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
                     away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration,
@@ -123,29 +123,29 @@ function processmatch(logger, t, postToSlack, today, apimatch, dbmatch) {
                         postToSlack(t(":sports_medal: Final results for {home} vs {away}, {home} {homeGoals} - {awayGoals} {away}", {
                             home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
                             away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration,
-                            homeGoals: apimatch.goalsHomeTeam,
-                            awayGoals: apimatch.goalsAwayTeam
+                            homeGoals: apimatch.scoreHomeTeam,
+                            awayGoals: apimatch.scoreAwayTeam
                         }));
                         break;
                 }
             } else {
                 if (
-                    apimatch.goalsHomeTeam !== dbmatch.goalsHomeTeam ||
-                    apimatch.goalsAwayTeam !== dbmatch.goalsAwayTeam
+                    apimatch.scoreHomeTeam !== dbmatch.scoreHomeTeam ||
+                    apimatch.scoreAwayTeam !== dbmatch.scoreAwayTeam
                 ) {
                     postToSlack(t("New update for {home} vs {away}, {home} {homeGoals} - {awayGoals} {away}", {
                         home: homeTeamDecoration + t(apimatch.homeTeamName) + homeTeamDecoration + " " + flagsEmoji[apimatch.homeTeamName],
                         away: flagsEmoji[apimatch.awayTeamName] + " " + awayTeamDecoration + t(apimatch.awayTeamName) + awayTeamDecoration,
-                        homeGoals: apimatch.goalsHomeTeam,
-                        awayGoals: apimatch.goalsAwayTeam
+                        homeGoals: apimatch.scoreHomeTeam,
+                        awayGoals: apimatch.scoreAwayTeam
                     }));
                 }
             }
         }
 
         dbmatch.status = apimatch.status;
-        dbmatch.goalsHomeTeam = apimatch.goalsHomeTeam;
-        dbmatch.goalsAwayTeam = apimatch.goalsAwayTeam;
+        dbmatch.scoreHomeTeam = apimatch.scoreHomeTeam;
+        dbmatch.scoreAwayTeam = apimatch.scoreAwayTeam;
         dbmatch.posted = true;
     }
 }
@@ -174,8 +174,8 @@ function parseApiData(logger, bodyData) {
             date: match.date,
             homeTeamName: match.homeTeamName,
             awayTeamName: match.awayTeamName,
-            goalsHomeTeam: match.result.goalsHomeTeam,
-            goalsAwayTeam: match.result.goalsAwayTeam
+            scoreHomeTeam: match.result.scoreHomeTeam,
+            scoreAwayTeam: match.result.scoreAwayTeam
         });
     });
     return apiData;
